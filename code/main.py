@@ -78,6 +78,29 @@ def compute_daily_variable_rate(history):
         return median / days_between
 
 
+def compute_daily_variable_rate(history, days=30):
+    if len(history) < 2:
+        return 0.0
+
+    med = history['amount'].median()
+    filtered = history[history['amount'] <= 3.0 * med] if med > 0 else history
+    if len(filtered) < 2:
+        return 0.0
+
+    mean = filtered['amount'].mean()
+    std = filtered['amount'].std() if len(filtered) > 1 else 0.0
+    cv = std / mean if mean > 0 else 0.0
+
+    if cv < 0.35:
+        # Steady pattern: mean-based daily rate
+        return filtered['amount'].sum() / float(days)
+    else:
+        # Lumpy pattern: frequency-adjusted 90th percentile rate
+        purchases_per_day = len(filtered) / float(days)
+        typical = filtered['amount'].quantile(0.9)
+        return typical * purchases_per_day
+
+
 def calculate_dynamic_amount_safe_to_pay(user_id, req_date_str, requested_amount, profile, events_df):
     avail_balance = float(profile['current_available_balance'])
     min_balance = float(profile['minimum_balance_to_keep'])
@@ -140,7 +163,7 @@ def calculate_dynamic_amount_safe_to_pay(user_id, req_date_str, requested_amount
         (u_events_copy['event_date_dt'] >= history_start_dt)
     ].copy()
     
-    daily_rate = hist_debits['amount'].sum() / 30.0 if not hist_debits.empty else 0.0
+    daily_rate = compute_daily_variable_rate(hist_debits, days=30)
     variable_reserve = daily_rate * days_to_income
     
     safe = buffer_today - pre_income_debits - variable_reserve
