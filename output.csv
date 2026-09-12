@@ -48,7 +48,7 @@ request_71,0.0,not_affordable,not_recommended,none,,none,Do not make this paymen
 request_72,10861.49,not_affordable,not_recommended,none,,none,Do not make this payment. No safe option available.
 request_73,55629.56,not_affordable,not_recommended,none,,none,Do not make this payment. No safe option available.
 request_74,5010.0,affordable_now,full_payment,2025-08-04:5010,2025-08-04,none,Pay 5010 today. Balance remains safe throughout 90-day forecast.
-request_75,28270.0,affordable_with_plan,installments,2026-04-09:9800.27|2026-05-09:9800.27|2026-06-08:9800.27,2026-05-15,none,Use 3 payments starting 2026-04-09.
+request_75,5210.62,affordable_with_plan,installments,2026-04-09:9800.27|2026-05-09:9800.27|2026-06-08:9800.27,2026-04-06,none,Use 3 payments starting 2026-04-09.
 request_76,39.3,not_affordable,not_recommended,none,,none,Do not make this payment. No safe option available.
 request_77,60700.0,affordable_now,full_payment,2025-11-05:60700,2025-11-05,none,Pay 60700 today. Balance remains safe throughout 90-day forecast.
 request_78,39996.2,not_affordable,not_recommended,none,,none,Do not make this payment. No safe option available.
@@ -138,7 +138,7 @@ request_161,3327931.92,not_affordable,not_recommended,none,,none,Do not make thi
 request_162,2125522.73,not_affordable,not_recommended,none,,none,Do not make this payment. No safe option available.
 request_163,9208055.98,affordable_with_plan,installments,2024-09-10:6692053.33|2024-10-11:6692053.33|2024-11-11:6692053.33,2024-11-15,none,Use 3 payments starting 2024-09-10.
 request_164,23713910.91,affordable_with_plan,installments,2025-02-11:9366240|2025-03-11:9366240|2025-04-08:9366240,2025-03-24,none,Use 3 payments starting 2025-02-11.
-request_165,80600.0,affordable_now,full_payment,2026-04-06:80600,2026-04-06,none,Pay 80600 today. Balance remains safe throughout 90-day forecast.
+request_165,62212.09,not_affordable,not_recommended,none,,none,Do not make this payment. No safe option available.
 request_166,2907.6,affordable_with_plan,installments,2024-12-03:1007.97|2025-01-03:1007.97|2025-02-03:1007.97,2025-01-08,none,Use 3 payments starting 2024-12-03.
 request_167,43802.0,affordable_now,full_payment,2025-05-05:43802,2025-05-05,none,Pay 43802 today. Balance remains safe throughout 90-day forecast.
 request_168,38292.65,affordable_with_plan,partial_payment,2026-01-07:38292.65|2026-03-15:11087.35,2026-03-15,none,Pay 38292.65 today and remaining 11087.35 on 2026-03-15.
@@ -147,7 +147,7 @@ request_170,28093769.71,affordable_with_plan,installments,2025-08-06:12804480|20
 request_171,33.07,not_affordable,not_recommended,none,,none,Do not make this payment. No safe option available.
 request_172,8334.3,affordable_with_plan,partial_payment,2024-06-05:8334.3|2024-07-15:1865.7,2024-07-15,none,Pay 8334.3 today and remaining 1865.7 on 2024-07-15.
 request_173,57340.51,not_affordable,not_recommended,none,,none,Do not make this payment. No safe option available.
-request_174,1146.2,affordable_with_plan,installments,2026-04-04:397.35|2026-05-04:397.35|2026-06-03:397.35,2026-05-15,none,Use 3 payments starting 2026-04-04.
+request_174,1146.2,affordable_with_plan,installments,2026-04-04:397.35|2026-05-04:397.35|2026-06-03:397.35,2026-04-04,none,Use 3 payments starting 2026-04-04.
 request_175,2346.3,affordable_now,full_payment,2024-09-06:2346.3,2024-09-06,none,Pay 2346.3 today. Balance remains safe throughout 90-day forecast.
 request_176,347.75,affordable_later,wait,2025-02-24:1239.7,2025-02-24,none,"Wait until 2025-02-24, then pay 1239.7 in full."
 request_177,1017.6,affordable_now,full_payment,2026-01-05:1017.6,2026-01-05,none,Pay 1017.6 today. Balance remains safe throughout 90-day forecast.
@@ -219,7 +219,7 @@ request_242,0.0,not_affordable,not_recommended,none,,none,Do not make this payme
 request_243,17468.0,affordable_now,full_payment,2026-07-07:17468,2026-07-07,none,Pay 17468 today. Balance remains safe throughout 90-day forecast.
 request_244,49918.0,affordable_now,full_payment,2024-06-04:49918,2024-06-04,none,Pay 49918 today. Balance remains safe throughout 90-day forecast.
 request_245,33733.09,not_affordable,not_recommended,none,,none,Do not make this payment. No safe option available.
-request_246,64086.0,affordable_with_plan,installments,2026-04-03:22216.48|2026-05-03:22216.48|2026-06-02:22216.48,2026-05-15,none,Use 3 payments starting 2026-04-03.
+request_246,51974.36,affordable_with_plan,installments,2026-04-03:22216.48|2026-05-03:22216.48|2026-06-02:22216.48,2026-04-03,none,Use 3 payments starting 2026-04-03.
 request_247,1059.3,affordable_now,full_payment,2024-09-05:1059.3,2024-09-05,none,Pay 1059.3 today. Balance remains safe throughout 90-day forecast.
 request_248,901.55,affordable_with_plan,partial_payment,2025-02-07:901.55|2025-04-24:1064.05,2025-04-24,none,Pay 901.55 today and remaining 1064.05 on 2025-04-24.
 request_249,168.14,affordable_later,wait,2026-03-15:643.2,2026-03-15,none,"Wait until 2026-03-15, then pay 643.2 in full."
@@ -228,7 +228,7 @@ request_251,2434.48,not_affordable,not_recommended,none,,none,Do not make this p
 request_252,4028268.83,affordable_later,wait,2026-09-15:28082000,2026-09-15,none,"Wait until 2026-09-15, then pay 28082000 in full."
 request_253,1434.9,affordable_with_plan,installments,2024-03-21:984.6|2024-04-21:984.6|2024-05-22:984.6,2024-05-15,none,Use 3 payments starting 2024-03-21.
 request_254,530.85,affordable_later,wait,2025-10-15:3535.2,2025-10-15,none,"Wait until 2025-10-15, then pay 3535.2 in full."
-request_255,3345000.0,affordable_now,full_payment,2026-04-06:3345000,2026-04-06,none,Pay 3345000 today. Balance remains safe throughout 90-day forecast.
+request_255,1370646.1,not_affordable,not_recommended,none,,none,Do not make this payment. No safe option available.
 request_256,138614.09,affordable_with_plan,installments,2024-06-10:75816|2024-07-11:75816|2024-08-11:75816,2024-08-15,none,Use 3 payments starting 2024-06-10.
 request_257,527.84,affordable_later,wait,2026-01-15:1352.4,2026-01-15,none,"Wait until 2026-01-15, then pay 1352.4 in full."
 request_258,1113.6,affordable_now,full_payment,2026-01-07:1113.6,2026-01-07,none,Pay 1113.6 today. Balance remains safe throughout 90-day forecast.
