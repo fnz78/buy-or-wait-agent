@@ -123,9 +123,9 @@ def calculate_dynamic_amount_safe_to_pay(user_id, req_date_str, requested_amount
                     amt = float(ev['amount']) if pd.notnull(ev['amount']) else 0.0
                     pre_income_debits += amt
                     
-    # 3. Forecast PATTERN-AWARE variable run-rate from history (groceries, transport, dining)
-    history_start = req_date - timedelta(days=60)
-    variable_categories = ['groceries', 'transport', 'dining']
+    # 3. Forecast ESSENTIAL VARIABLE run-rate over last 30 days (groceries, transport, dining, entertainment)
+    history_start = req_date - timedelta(days=30)
+    variable_categories = ['groceries', 'transport', 'dining', 'entertainment']
     
     u_events_copy = u_events.copy()
     u_events_copy['event_date_dt'] = pd.to_datetime(u_events_copy['event_date'])
@@ -140,7 +140,7 @@ def calculate_dynamic_amount_safe_to_pay(user_id, req_date_str, requested_amount
         (u_events_copy['event_date_dt'] >= history_start_dt)
     ].copy()
     
-    daily_rate = compute_daily_variable_rate(hist_debits)
+    daily_rate = hist_debits['amount'].sum() / 30.0 if not hist_debits.empty else 0.0
     variable_reserve = daily_rate * days_to_income
     
     safe = buffer_today - pre_income_debits - variable_reserve
