@@ -18,6 +18,34 @@ Read [`problem_statement.md`](./problem_statement.md) for the full task spec, in
 
 ---
 
+## Solution Overview & Execution Instructions
+
+This repository contains the complete working solution for the **Buy or Wait Financial Decision Agent**.
+
+### 1. Project Architecture
+- **`code/main.py`**: Primary entry point. Handles input file ingestion, visual image amount mapping, Regex text message parsing, pre-income buffer calculations with volatility-adaptive daily variable rates ($CV = \sigma / \mu$), and decision tree orchestration.
+- **`code/installments.py`**: 90-day cashflow simulator, recurring debit/income projection engine, and seller installment plan evaluation.
+- **`code/evaluate.py`**: Self-scoring evaluation harness.
+- **`evaluation/usage_report.md`**: Token, model provider, and compute usage report.
+- **`evaluation/known_limitations.md`**: Documented precision analysis and design trade-off rationale.
+- **`INTERVIEW_PREP.md`**: Architecture breakdown, key design choices, failure modes, and AI assistance disclosure.
+
+### 2. Execution & Output Generation
+To run the full solution and generate predictions for all 250 requests:
+
+```bash
+python code/main.py dataset/requests.csv output.csv
+```
+
+To evaluate predictions on the 25 ground truth sample requests:
+
+```bash
+python code/main.py dataset/sample_requests.csv sample_output.csv
+python code/evaluate.py sample_output.csv dataset/sample_requests.csv
+```
+
+---
+
 ## Quick Start
 
 Clone the repository and move into the project directory:
