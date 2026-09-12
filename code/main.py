@@ -427,10 +427,9 @@ def process_request(row, profiles_df, events_df, options_df):
             }
             
     # 4. Fallback (Not Affordable)
-    buffer_today = max(0.0, float(profile['current_available_balance']) - float(profile['minimum_balance_to_keep']))
     return {
         'request_id': req_id,
-        'amount_safe_to_pay': round(buffer_today, 2),
+        'amount_safe_to_pay': amount_safe,
         'affordability_status': 'not_affordable',
         'recommended_payment_method': 'not_recommended',
         'payment_plan': 'none',
