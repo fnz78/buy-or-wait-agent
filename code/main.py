@@ -326,6 +326,50 @@ def process_request(row, profiles_df, events_df, options_df):
     }
 
 
+import re
+
+
+def apply_message_overrides(events_df, messages_df):
+    events_mod = events_df.copy()
+    
+    sal_regexes = [
+        r'(?:salary is reduced to|monthly pay is|salary will be|salary is|gaji pokok yang dikonfirmasi adalah)\s+(?:[A-Z]{3}\s+)?([\d,]+\.?\d*)',
+        r'salary reduced to\s+(?:[A-Z]{3}\s+)?([\d,]+\.?\d*)'
+    ]
+    rent_regexes = [
+        r'rent (?:increases|increased|will increase) by\s+(\d+)%'
+    ]
+    
+    for _, msg in messages_df.iterrows():
+        user_id = msg['user_id']
+        text = str(msg['message_text'])
+        
+        for r in sal_regexes:
+            match = re.search(r, text, re.IGNORECASE)
+            if match:
+                val_str = match.group(1).replace(',', '')
+                try:
+                    new_val = float(val_str)
+                    mask = (events_mod['user_id'] == user_id) & (events_mod['category'] == 'salary')
+                    if mask.any():
+                        events_mod.loc[mask, 'amount'] = new_val
+                except ValueError:
+                    pass
+                    
+        for r in rent_regexes:
+            match = re.search(r, text, re.IGNORECASE)
+            if match:
+                try:
+                    pct = float(match.group(1))
+                    mask = (events_mod['user_id'] == user_id) & (events_mod['category'] == 'rent')
+                    if mask.any():
+                        events_mod.loc[mask, 'amount'] = events_mod.loc[mask, 'amount'] * (1.0 + pct / 100.0)
+                except ValueError:
+                    pass
+                    
+    return events_mod
+
+
 def main():
     input_file = sys.argv[1] if len(sys.argv) > 1 else 'dataset/requests.csv'
     output_file = sys.argv[2] if len(sys.argv) > 2 else 'output.csv'
@@ -334,6 +378,12 @@ def main():
     profiles_df = pd.read_csv('dataset/financial_profiles.csv')
     events_df = pd.read_csv('dataset/financial_events.csv')
     options_df = pd.read_csv('dataset/request_payment_options.csv')
+    
+    try:
+        messages_df = pd.read_csv('dataset/messages.csv')
+        events_df = apply_message_overrides(events_df, messages_df)
+    except Exception as e:
+        pass
     
     output_columns = [
         'request_id', 'amount_safe_to_pay', 'affordability_status',
