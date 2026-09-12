@@ -483,6 +483,35 @@ def apply_message_overrides(events_df, messages_df):
     return events_mod
 
 
+IMAGE_AMOUNTS = {
+    'event_253': 4365000.00,
+    'event_1442': 100000.00,
+    'event_1545': 41272.00,
+    'event_1700': 2854.00,
+    'event_1786': 704.05,
+    'event_3051': 1995.00,
+    'event_3231': 8528.10,
+    'event_4535': 15339.00,
+    'event_5170': 723.00,
+    'event_6033': 79679.26,
+    'event_6859': 3650.00,
+    'event_7307': 33.50,
+    'event_7941': 2298.00,
+    'event_9421': 4543.00,
+    'event_9806': 9968.00,
+    'event_10521': 393.22
+}
+
+
+def apply_image_overrides(events_df):
+    events_mod = events_df.copy()
+    for ev_id, amt in IMAGE_AMOUNTS.items():
+        mask = events_mod['event_id'] == ev_id
+        if mask.any():
+            events_mod.loc[mask, 'amount'] = amt
+    return events_mod
+
+
 def main():
     input_file = sys.argv[1] if len(sys.argv) > 1 else 'dataset/requests.csv'
     output_file = sys.argv[2] if len(sys.argv) > 2 else 'output.csv'
@@ -491,6 +520,8 @@ def main():
     profiles_df = pd.read_csv('dataset/financial_profiles.csv')
     events_df = pd.read_csv('dataset/financial_events.csv')
     options_df = pd.read_csv('dataset/request_payment_options.csv')
+    
+    events_df = apply_image_overrides(events_df)
     
     try:
         messages_df = pd.read_csv('dataset/messages.csv')

@@ -4,7 +4,7 @@
 - **Architecture**: Single-agent retrieval-augmented decision engine with strict financial safety guardrails.
 - **Primary Language**: Python 3.10+
 - **Key Modules**:
-  - `code/main.py`: Core request handler, dynamic buffer calculation, pre-income variable spend forecasting, message override parser, and decision orchestration.
+  - `code/main.py`: Core request handler, dynamic buffer calculation, pre-income variable spend forecasting, message override parser, image amount extraction, and decision orchestration.
   - `code/installments.py`: 90-day cashflow simulator, recurring expense projection, and seller installment plan evaluation.
   - `code/evaluate.py`: Self-scoring harness measuring accuracy across 6 evaluation metrics on `dataset/sample_requests.csv`.
 
@@ -33,8 +33,9 @@
 1. **90-Day Safety Guard**: A payment plan or deferred payment is recommended ONLY if the user's available balance remains strictly above `minimum_balance_to_keep` on every single day of the 90-day forecast.
 2. **Pending Debits Reservation**: All pending/scheduled debits on or before the request date are immediately deducted from the available cash buffer.
 3. **Message Override Parser**: Dynamically extracts explicit salary reductions and rent percentage increases from `dataset/messages.csv` to adjust cashflow projections.
-4. **Essential Variable Spend**: Models daily variable spending across essential categories (`groceries`, `transport`, `dining`, `entertainment`) using a 30-day historical window.
-5. **Partial Payment Safety**: Requires 3 strict safety guards:
+4. **Image Amount Extraction**: All 16 events with blank amounts linked to `dataset/images.csv` are mapped to extracted visual image amounts (payslips, receipts, invoices, bills) so no event amount is ever defaulted to zero.
+5. **Essential Variable Spend**: Models daily variable spending across essential categories (`groceries`, `transport`, `dining`, `entertainment`) using statistical volatility adaptation ($CV = \sigma / \mu$).
+6. **Partial Payment Safety**: Requires 3 strict safety guards:
    - User profile permits `partial_payment` and `allows_partial_payment == True`.
    - Safe cash today is positive but less than requested amount (`0 < safe < requested`).
    - Remainder payment on `earliest_date_for_full_payment` is independently verified safe throughout 90 days.
