@@ -227,6 +227,71 @@ def find_earliest_full_payment_date(user_id, req_date_str, requested_amount, des
     return None
 
 
+def find_spending_changes_needed(user_id, req_date_str, amount_safe, requested_amount, profile, events_df):
+    if amount_safe >= requested_amount:
+        return None, 0.0
+        
+    req_date = datetime.strptime(req_date_str, '%Y-%m-%d').date()
+    end_date = req_date + timedelta(days=90)
+    
+    stop_cats = set(str(profile.get('expense_categories_user_is_willing_to_stop', '')).split('|'))
+    reduce_cats = set(str(profile.get('expense_categories_user_is_willing_to_reduce', '')).split('|'))
+    protect_cats = set(str(profile.get('expense_categories_to_protect', '')).split('|'))
+    
+    u_events = events_df[events_df['user_id'] == user_id]
+    
+    candidates = []
+    for _, ev in u_events.iterrows():
+        st = str(ev['status']).lower()
+        if st in ['cancelled']: continue
+        direction = str(ev['direction']).lower()
+        if direction != 'debit': continue
+        
+        cat = str(ev['category']).lower()
+        if cat in protect_cats: continue
+        
+        flex = str(ev['flexibility']).lower()
+        amt = float(ev['amount']) if pd.notnull(ev['amount']) else 0.0
+        min_amt = float(ev['minimum_allowed_amount']) if pd.notnull(ev['minimum_allowed_amount']) else 0.0
+        
+        d_str = str(ev['settlement_date']) if pd.notnull(ev['settlement_date']) and str(ev['settlement_date']) != 'nan' else str(ev['event_date'])
+        if d_str == 'nan': continue
+        e_d = datetime.strptime(d_str, '%Y-%m-%d').date()
+        if not (req_date <= e_d <= end_date): continue
+        
+        ev_id = str(ev['event_id'])
+        
+        if flex == 'stoppable' and (cat in stop_cats or 'all' in stop_cats or flex == 'stoppable'):
+            saving = amt
+            action_str = f"stop:{ev_id}"
+            candidates.append({'event_id': ev_id, 'saving': saving, 'action': action_str, 'date': e_d})
+        elif flex == 'reducible' and (cat in reduce_cats or 'all' in reduce_cats or flex == 'reducible'):
+            saving = max(0.0, amt - min_amt)
+            if saving > 0:
+                min_str = f"{min_amt:.2f}".rstrip('0').rstrip('.')
+                action_str = f"reduce_to:{ev_id}:{min_str}"
+                candidates.append({'event_id': ev_id, 'saving': saving, 'action': action_str, 'date': e_d})
+                
+    if not candidates:
+        return None, 0.0
+        
+    candidates.sort(key=lambda x: (-x['saving'], x['date']))
+    
+    acc_saving = 0.0
+    actions = []
+    for cand in candidates[:3]:
+        if cand['action'] not in actions:
+            acc_saving += cand['saving']
+            actions.append(cand['action'])
+            if amount_safe + acc_saving >= requested_amount:
+                break
+                
+    if amount_safe + acc_saving >= requested_amount:
+        return "|".join(actions), acc_saving
+        
+    return None, 0.0
+
+
 def process_request(row, profiles_df, events_df, options_df):
     user_id = row['user_id']
     req_id = row['request_id']
@@ -258,6 +323,25 @@ def process_request(row, profiles_df, events_df, options_df):
             'spending_changes_needed': 'none',
             'decision_explanation': f"Pay {amt_str} today. Balance remains safe throughout 90-day forecast."
         }
+        
+    # Check if Spending Changes make Full Payment Today Safe (affordable_with_plan)
+    if 'full_payment' in user_methods:
+        sp_changes_str, sp_savings = find_spending_changes_needed(user_id, req_date, amount_safe, requested_amount, profile, events_df)
+        if sp_changes_str is not None:
+            earliest_date = find_earliest_full_payment_date(
+                user_id, req_date, requested_amount, desired_completion_date, profile, events_df
+            )
+            earliest_str = earliest_date.strftime('%Y-%m-%d') if earliest_date else req_date
+            return {
+                'request_id': req_id,
+                'amount_safe_to_pay': min(amount_safe, requested_amount),
+                'affordability_status': 'affordable_with_plan',
+                'recommended_payment_method': 'full_payment',
+                'payment_plan': f"{req_date}:{amt_str}",
+                'earliest_date_for_full_payment': earliest_str,
+                'spending_changes_needed': sp_changes_str,
+                'decision_explanation': f"Apply spending changes ({sp_changes_str}), then pay {amt_str} today."
+            }
         
     # 2. Check Partial Payment Option (affordable_with_plan)
     # Guard 1: allows_partial is True AND 'partial_payment' in user_methods
