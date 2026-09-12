@@ -214,9 +214,10 @@ def find_earliest_full_payment_date(user_id, req_date_str, requested_amount, des
             candidate = datetime(y, m, 28).date()
             
     if candidate >= req_date:
-        return candidate
+        if check_full_payment_safety_on_date(user_id, req_date, candidate, requested_amount, profile, events_df):
+            return candidate
         
-    return desired_date
+    return None
 
 
 def process_request(row, profiles_df, events_df, options_df):
@@ -251,7 +252,31 @@ def process_request(row, profiles_df, events_df, options_df):
             'decision_explanation': f"Pay {amt_str} today. Balance remains safe throughout 90-day forecast."
         }
         
-    # 2. Check Installment Payment Options (affordable_with_plan)
+    # 2. Check Partial Payment Option (affordable_with_plan)
+    # Guard 1: allows_partial is True AND 'partial_payment' in user_methods
+    # Guard 2: 0 < amount_safe < requested_amount
+    # Guard 3: earliest_date is not None and safe
+    if allows_partial and 'partial_payment' in user_methods and 0 < amount_safe < requested_amount:
+        earliest_date = find_earliest_full_payment_date(
+            user_id, req_date, requested_amount, desired_completion_date, profile, events_df
+        )
+        if earliest_date is not None:
+            earliest_str = earliest_date.strftime('%Y-%m-%d')
+            remainder = requested_amount - amount_safe
+            safe_str = f"{amount_safe:.2f}".rstrip('0').rstrip('.')
+            rem_str = f"{remainder:.2f}".rstrip('0').rstrip('.')
+            return {
+                'request_id': req_id,
+                'amount_safe_to_pay': amount_safe,
+                'affordability_status': 'affordable_with_plan',
+                'recommended_payment_method': 'partial_payment',
+                'payment_plan': f"{req_date}:{safe_str}|{earliest_str}:{rem_str}",
+                'earliest_date_for_full_payment': earliest_str,
+                'spending_changes_needed': 'none',
+                'decision_explanation': f"Pay {safe_str} today and remaining {rem_str} on {earliest_str}."
+            }
+
+    # 3. Check Installment Payment Options (affordable_with_plan)
     best_installment = evaluate_installments(row, profile, options_df, events_df, amount_safe)
     if best_installment is not None:
         earliest_sal_date = find_earliest_full_payment_date(
