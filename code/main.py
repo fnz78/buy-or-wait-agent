@@ -51,6 +51,33 @@ def find_next_income_date(u_events, req_date):
     return req_date + timedelta(days=30)
 
 
+def compute_daily_variable_rate(history):
+    """
+    history: settled groceries/transport/dining events in last 60 days
+    Returns a daily IDR/EUR/USD rate.
+    """
+    if len(history) < 3:
+        return 0.0
+
+    # Outlier filter
+    median = history['amount'].median()
+    filtered = history[history['amount'] <= 3 * median]
+    if len(filtered) < 2:
+        return 0.0
+
+    mean = filtered['amount'].mean()
+    std = filtered['amount'].std()
+    cv = std / mean if mean > 0 else 0
+
+    if cv < 0.3:
+        # Steady pattern: daily rate = total / 60
+        return filtered['amount'].sum() / 60
+    else:
+        # Lumpy pattern: median purchase × purchases per day
+        days_between = 60 / len(filtered)
+        return median / days_between
+
+
 def calculate_dynamic_amount_safe_to_pay(user_id, req_date_str, requested_amount, profile, events_df):
     avail_balance = float(profile['current_available_balance'])
     min_balance = float(profile['minimum_balance_to_keep'])
@@ -113,28 +140,8 @@ def calculate_dynamic_amount_safe_to_pay(user_id, req_date_str, requested_amount
         (u_events_copy['event_date_dt'] >= history_start_dt)
     ].copy()
     
-    if hist_debits.empty:
-        variable_reserve = 0.0
-    else:
-        # Exclude outlier debits > 3x median
-        med_val = hist_debits['amount'].median()
-        if med_val > 0:
-            hist_debits = hist_debits[hist_debits['amount'] <= 3.0 * med_val]
-            
-        if len(hist_debits) < 3:
-            daily_rate = 0.0
-        else:
-            mean_val = hist_debits['amount'].mean()
-            std_val = hist_debits['amount'].std()
-            if mean_val > 0 and (std_val / mean_val) < 0.3:
-                # Steady recurrence — use 60-day mean
-                daily_rate = hist_debits['amount'].sum() / 60.0
-            else:
-                # Lumpy recurrence — median purchase x expected frequency
-                days_between = 60.0 / len(hist_debits)
-                daily_rate = hist_debits['amount'].median() / max(1.0, days_between)
-                
-        variable_reserve = daily_rate * days_to_income
+    daily_rate = compute_daily_variable_rate(hist_debits)
+    variable_reserve = daily_rate * days_to_income
     
     safe = buffer_today - pre_income_debits - variable_reserve
     return max(0.0, round(safe, 2))
