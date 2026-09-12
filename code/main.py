@@ -30,6 +30,8 @@ def find_next_income_date(u_events, req_date):
     ]
     if not salaries.empty:
         latest_sal = salaries.sort_values('event_date', ascending=False).iloc[0]
+        if 'final' in str(latest_sal['description']).lower():
+            return None
         sal_date = datetime.strptime(str(latest_sal['event_date']), '%Y-%m-%d').date()
         day = sal_date.day
         
@@ -50,32 +52,6 @@ def find_next_income_date(u_events, req_date):
             
     return req_date + timedelta(days=30)
 
-
-def compute_daily_variable_rate(history):
-    """
-    history: settled groceries/transport/dining events in last 60 days
-    Returns a daily IDR/EUR/USD rate.
-    """
-    if len(history) < 3:
-        return 0.0
-
-    # Outlier filter
-    median = history['amount'].median()
-    filtered = history[history['amount'] <= 3 * median]
-    if len(filtered) < 2:
-        return 0.0
-
-    mean = filtered['amount'].mean()
-    std = filtered['amount'].std()
-    cv = std / mean if mean > 0 else 0
-
-    if cv < 0.3:
-        # Steady pattern: daily rate = total / 60
-        return filtered['amount'].sum() / 60
-    else:
-        # Lumpy pattern: median purchase × purchases per day
-        days_between = 60 / len(filtered)
-        return median / days_between
 
 
 def compute_daily_variable_rate(history, days=30):
@@ -125,11 +101,17 @@ def calculate_dynamic_amount_safe_to_pay(user_id, req_date_str, requested_amount
         return 0.0
         
     next_inc_date = find_next_income_date(u_events, req_date)
-    days_to_income = max(1, (next_inc_date - req_date).days)
+    if next_inc_date is None:
+        days_to_income = 90
+        next_inc_date_bound = req_date + timedelta(days=90)
+    else:
+        days_to_income = max(1, (next_inc_date - req_date).days)
+        next_inc_date_bound = next_inc_date
     
     # 1. Projected fixed recurring debits between req_date and next_inc_date
     projected_recurring = get_projected_recurring_events(user_id, req_date, events_df, forecast_days=days_to_income)
-    fixed_pre_income = sum(-net for d, net in projected_recurring.items() if req_date <= d < next_inc_date and net < 0)
+    fixed_pre_income = sum(-net for d, net in projected_recurring.items() if req_date <= d < next_inc_date_bound and net < 0)
+
     
     # 2. Reserve explicit pending/scheduled pre-income debits (after req_date)
     pre_income_debits = fixed_pre_income
@@ -142,7 +124,7 @@ def calculate_dynamic_amount_safe_to_pay(user_id, req_date_str, requested_amount
             date_str = str(ev['settlement_date']) if pd.notnull(ev['settlement_date']) and str(ev['settlement_date']) != 'nan' else str(ev['event_date'])
             if date_str != 'nan':
                 e_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-                if req_date < e_date < next_inc_date:
+                if req_date < e_date < next_inc_date_bound:
                     amt = float(ev['amount']) if pd.notnull(ev['amount']) else 0.0
                     pre_income_debits += amt
                     
@@ -163,7 +145,7 @@ def calculate_dynamic_amount_safe_to_pay(user_id, req_date_str, requested_amount
         (u_events_copy['event_date_dt'] >= history_start_dt)
     ].copy()
     
-    daily_rate = compute_daily_variable_rate(hist_debits, days=30)
+    daily_rate = compute_daily_variable_rate(hist_debits,  days=30)
     variable_reserve = daily_rate * days_to_income
     
     safe = buffer_today - pre_income_debits - variable_reserve
@@ -225,6 +207,9 @@ def find_earliest_full_payment_date(user_id, req_date_str, requested_amount, des
         (pd.notnull(u_events['event_date']))
     ]
     if not salaries.empty:
+        latest_sal = salaries.sort_values('event_date', ascending=False).iloc[0]
+        if 'final' in str(latest_sal['description']).lower():
+            return None
         days = [datetime.strptime(str(d), '%Y-%m-%d').day for d in salaries['event_date']]
         day = max(set(days), key=days.count)
     else:
